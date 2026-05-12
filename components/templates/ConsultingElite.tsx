@@ -82,13 +82,55 @@ function ItemRenderer({ type, item }: { type: ResumeSection["type"]; item: Secti
         </div>
       );
     }
-    
-    // Fallback simple rendering for others to keep files compact
-    default:
+
+    case "education": {
+      const edu = item as EducationItem;
       return (
-        <div className="text-[10pt]">
-          <pre className="whitespace-pre-wrap font-sans text-xs bg-gray-50 p-2">{JSON.stringify(item.content, null, 2)}</pre>
+        <div>
+          <div className="flex justify-between items-baseline mb-0.5">
+            <span className="font-bold text-[11pt]">{edu.content.institution}</span>
+            <span className="text-[10pt]">{edu.content.location}</span>
+          </div>
+          <div className="flex justify-between items-baseline mb-1 text-[10.5pt]">
+            <span className="italic">{edu.content.degree}{edu.content.field ? `, ${edu.content.field}` : ""}</span>
+            <span className="text-[10pt]">{edu.content.startDate} {edu.content.endDate && `- ${edu.content.endDate}`}</span>
+          </div>
         </div>
       );
+    }
+
+    case "skills": {
+      const skill = item as SkillsItem;
+      return (
+        <div className="text-[10pt] flex gap-2">
+          <span className="font-bold">{skill.content.category}:</span>
+          <span>{Array.isArray(skill.content.skills) ? skill.content.skills.map((s: any) => typeof s === 'string' ? s : s.name).join(", ") : skill.content.skills}</span>
+        </div>
+      );
+    }
+
+    case "summary":
+      return <div className="text-[10pt] leading-relaxed">{(item.content.text as string) || ""}</div>;
+
+    case "projects": {
+      const proj = item as ProjectItem;
+      return (
+        <div>
+          <div className="flex justify-between items-baseline mb-0.5">
+            <span className="font-bold text-[11pt]">{proj.content.name}</span>
+            <span className="text-[10pt]">{proj.content.url}</span>
+          </div>
+          <p className="text-[10pt] mb-1 italic">{proj.content.description}</p>
+          <ul className="list-disc ml-5 space-y-0.5">
+            {proj.content.bullets?.map((bullet, i) => (
+              <li key={i} className="text-[10pt] pl-1">{bullet}</li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+    
+    default:
+      return null;
   }
 }

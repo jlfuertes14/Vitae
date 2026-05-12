@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { AIAssistant } from "./AIAssistant";
+import { TemplateSelector } from "./TemplateSelector";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface EditorLayoutProps {
@@ -66,6 +67,9 @@ export function EditorLayout({ resumeId }: EditorLayoutProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <div className="hidden md:block border-r border-border pr-2 mr-2">
+            <TemplateSelector />
+          </div>
           <div className="hidden sm:block">
             <AIAssistant />
           </div>

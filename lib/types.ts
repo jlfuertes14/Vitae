@@ -10,12 +10,19 @@ export interface ResumeContent {
 
 export interface ResumeHeader {
   fullName: string;
+  title?: string;
+  photoUrl?: string;
   email: string;
   phone?: string;
   location?: string;
   linkedin?: string;
   website?: string;
   github?: string;
+  birthDate?: string;
+  birthPlace?: string;
+  maritalStatus?: string;
+  nationality?: string;
+  gender?: string;
 }
 
 export interface ResumeSection {
@@ -35,11 +42,13 @@ export type SectionType =
   | "certifications"
   | "awards"
   | "leadership"
+  | "languages"
+  | "hobbies"
   | "custom";
 
 export interface SectionItem {
   id: string;
-  content: Record<string, string | string[]>;
+  content: Record<string, any>;
 }
 
 // Specific section item types
@@ -78,10 +87,15 @@ export interface ProjectItem extends SectionItem {
   };
 }
 
+export interface Skill {
+  name: string;
+  level: string;
+}
+
 export interface SkillsItem extends SectionItem {
   content: {
     category: string;
-    skills: string[];
+    skills: Skill[];
   };
 }
 

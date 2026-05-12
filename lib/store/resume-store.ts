@@ -4,11 +4,13 @@ import { ResumeContent, ResumeHeader, ResumeSection, SectionItem } from "@/lib/t
 interface ResumeState {
   // Data
   content: ResumeContent;
+  templateId: string;
   isDirty: boolean;
   isSaving: boolean;
   lastSavedAt: Date | null;
   
   // Actions
+  setTemplate: (id: string) => void;
   setHeader: (header: Partial<ResumeHeader>) => void;
   updateSection: (sectionId: string, updates: Partial<ResumeSection>) => void;
   addSectionItem: (sectionId: string, item: SectionItem) => void;
@@ -16,6 +18,8 @@ interface ResumeState {
   removeSectionItem: (sectionId: string, itemId: string) => void;
   reorderSectionItems: (sectionId: string, startIndex: number, endIndex: number) => void;
   reorderSections: (startIndex: number, endIndex: number) => void;
+  addSection: (section: ResumeSection) => void;
+  removeSection: (sectionId: string) => void;
   
   // Save State Management
   setSaving: (saving: boolean) => void;
@@ -66,9 +70,12 @@ const initialContent: ResumeContent = {
 
 export const useResumeStore = create<ResumeState>()((set) => ({
   content: initialContent,
+  templateId: "harvard-classic",
   isDirty: false,
   isSaving: false,
   lastSavedAt: null,
+
+  setTemplate: (id) => set({ templateId: id, isDirty: true }),
 
   setHeader: (headerUpdates) =>
     set((state) => ({
@@ -164,6 +171,27 @@ export const useResumeStore = create<ResumeState>()((set) => ({
         isDirty: true,
       };
     }),
+
+  addSection: (newSection) =>
+    set((state) => {
+      if (state.content.sections.some(s => s.id === newSection.id)) return state;
+      return {
+        content: {
+          ...state.content,
+          sections: [...state.content.sections, newSection],
+        },
+        isDirty: true,
+      };
+    }),
+
+  removeSection: (sectionId) =>
+    set((state) => ({
+      content: {
+        ...state.content,
+        sections: state.content.sections.filter(s => s.id !== sectionId),
+      },
+      isDirty: true,
+    })),
 
   setSaving: (saving) => set({ isSaving: saving }),
   setLastSaved: (date) => set({ lastSavedAt: date, isDirty: false }),

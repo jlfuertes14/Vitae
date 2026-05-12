@@ -79,13 +79,37 @@ function ItemRenderer({ type, item }: { type: ResumeSection["type"]; item: Secti
         </div>
       );
     }
-    
-    // Fallback simple rendering for others to keep files compact
-    default:
+
+    case "education": {
+      const edu = item as EducationItem;
       return (
-        <div className="text-[9.5pt]">
-          <pre className="whitespace-pre-wrap font-sans text-[8pt] bg-gray-50 p-1">{JSON.stringify(item.content, null, 2)}</pre>
+        <div>
+          <div className="flex justify-between items-baseline">
+            <span className="font-bold text-[10pt]">{edu.content.institution}</span>
+            <span className="text-[9.5pt]">{edu.content.location}</span>
+          </div>
+          <div className="flex justify-between items-baseline mb-0.5">
+            <span className="italic text-[10pt]">{edu.content.degree}{edu.content.field ? `, ${edu.content.field}` : ""}</span>
+            <span className="text-[9.5pt]">{edu.content.startDate} {edu.content.endDate && `- ${edu.content.endDate}`}</span>
+          </div>
         </div>
       );
+    }
+
+    case "skills": {
+      const skill = item as SkillsItem;
+      return (
+        <div className="text-[9.5pt] flex gap-2">
+          <span className="font-bold">{skill.content.category}:</span>
+          <span>{Array.isArray(skill.content.skills) ? skill.content.skills.join(", ") : skill.content.skills}</span>
+        </div>
+      );
+    }
+
+    case "summary":
+      return <div className="text-[9.5pt] leading-snug">{(item.content.text as string) || ""}</div>;
+    
+    default:
+      return null;
   }
 }

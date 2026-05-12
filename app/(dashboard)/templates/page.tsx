@@ -1,9 +1,23 @@
+"use client";
+
 import { TEMPLATES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Palette, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useResumeStore } from "@/lib/store/resume-store";
 
 export default function TemplatesPage() {
+  const router = useRouter();
+  const { setTemplate } = useResumeStore();
+
+  const handleSelectTemplate = (id: string) => {
+    setTemplate(id);
+    // In a real app, you might create a new resume here via API
+    // and then navigate to that specific ID.
+    // For now, we'll just go to the demo editor.
+    router.push("/resumes/demo");
+  };
+
   return (
     <div className="space-y-10">
       {/* Header */}
@@ -57,12 +71,13 @@ export default function TemplatesPage() {
                 {template.description}
               </p>
               
-              <Link href="/resumes">
-                <Button className="w-full rounded-2xl bg-white text-black hover:bg-white/90">
-                  Use this template
-                  <ArrowRight className="ml-2 size-4" />
-                </Button>
-              </Link>
+              <Button 
+                onClick={() => handleSelectTemplate(template.id)}
+                className="w-full rounded-2xl bg-white text-black hover:bg-white/90"
+              >
+                Use this template
+                <ArrowRight className="ml-2 size-4" />
+              </Button>
             </div>
           </div>
         ))}

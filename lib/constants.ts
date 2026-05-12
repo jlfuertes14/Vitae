@@ -30,7 +30,8 @@ export const DEFAULT_RESUME_SECTIONS = [
   { type: "projects", title: "Projects" },
   { type: "skills", title: "Skills" },
   { type: "certifications", title: "Certifications" },
-  { type: "awards", title: "Awards & Honors" },
+  { type: "languages", title: "Languages" },
+  { type: "hobbies", title: "Hobbies" },
 ] as const;
 
 // Tone Labels
@@ -76,8 +77,8 @@ export const TEMPLATES: { id: string; name: string; description: string; categor
   },
   {
     id: "harvard-classic",
-    name: "Harvard",
-    description: "The gold standard for academic and traditional professional roles.",
+    name: "Harvard Classic",
+    description: "Prestigious blue-accented design with a profile photo. Replicated for high-end professional applications.",
     category: "Classic",
     previewUrl: "https://resume.io/assets/templates/helsinki-ca1d2b7f.jpg", // Using Helsinki as a placeholder for classic
   },

@@ -13,8 +13,9 @@ interface TemplateRendererProps {
   zoom?: number;
 }
 
-export function TemplateRenderer({ templateId = "harvard-classic", zoom = 1 }: TemplateRendererProps) {
-  const { content } = useResumeStore();
+export function TemplateRenderer({ templateId: propTemplateId, zoom = 1 }: TemplateRendererProps) {
+  const { content, templateId: storeTemplateId } = useResumeStore();
+  const templateId = propTemplateId || storeTemplateId;
 
   // Dynamic template selection based on templateId
   const renderTemplate = () => {
@@ -41,7 +42,7 @@ export function TemplateRenderer({ templateId = "harvard-classic", zoom = 1 }: T
       style={{
         width: "210mm",
         minHeight: "297mm",
-        padding: "20mm", // Standard resume margins (approx 1 inch)
+        padding: "15mm", // Balanced margins for high-density templates
         transform: `scale(${zoom})`,
       }}
     >
