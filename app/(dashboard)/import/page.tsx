@@ -4,43 +4,81 @@ import { useState } from "react";
 import { UploadCloud, FileText, CheckCircle2, Sparkles, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useResumeStore } from "@/lib/store/resume-store";
+import { TEMPLATES } from "@/lib/constants";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ImportPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<"idle" | "uploading" | "parsing" | "complete">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("__current__");
+  const { templateId, setTemplate, setContent } = useResumeStore();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
+      setError(null);
     }
   };
 
-  const handleStartImport = () => {
+  const handleStartImport = async () => {
     if (!file) return;
-    
+
+    setError(null);
     setIsUploading(true);
     setStatus("uploading");
-    
-    // Simulate upload and parse process
-    let p = 0;
-    const interval = setInterval(() => {
-      p += 5;
-      setProgress(p);
-      
-      if (p === 40) setStatus("parsing");
-      if (p === 90) setStatus("complete");
-      
-      if (p >= 100) {
-        clearInterval(interval);
-        setIsUploading(false);
+    setProgress(20);
+
+    const templateToUse =
+      selectedTemplateId === "__current__" ? templateId : selectedTemplateId;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("templateId", templateToUse);
+
+    try {
+      setStatus("parsing");
+      setProgress(60);
+
+      const response = await fetch("/api/import", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Import failed");
       }
-    }, 150);
+
+      if (data?.resumeContent) {
+        setContent(data.resumeContent);
+        if (selectedTemplateId !== "__current__") {
+          setTemplate(templateToUse);
+        }
+      }
+
+      setProgress(100);
+      setStatus("complete");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import failed");
+      setStatus("idle");
+      setProgress(0);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -76,6 +114,30 @@ export default function ImportPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-8 pt-4 space-y-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] uppercase tracking-[0.24em] text-white/40">
+                Target template
+              </label>
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                <SelectTrigger className="h-11 rounded-2xl border-white/10 bg-white/[0.04] text-white/80">
+                  <SelectValue placeholder="Use current template" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0f0f0f] border-white/10 text-white">
+                  <SelectItem value="__current__">
+                    Use current template ({TEMPLATES.find((t) => t.id === templateId)?.name || "Current"})
+                  </SelectItem>
+                  {TEMPLATES.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-white/35">
+                If you skip this, we convert for the current template and you can switch later.
+              </p>
+            </div>
+
             <div 
               className={cn(
                 "group relative h-64 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center transition-all duration-300",
@@ -105,6 +167,7 @@ export default function ImportPage() {
                       setFile(null);
                       setStatus("idle");
                       setProgress(0);
+                      setError(null);
                     }}
                   >
                     Change file
@@ -121,7 +184,13 @@ export default function ImportPage() {
               )}
             </div>
 
-            {status !== "idle" && (
+            {error && (
+              <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                {error}
+              </div>
+            )}
+
+            {status !== "idle" && !error && (
               <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-300">
                 <div className="flex justify-between items-end">
                   <div className="space-y-1">

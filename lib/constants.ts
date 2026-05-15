@@ -2,6 +2,8 @@
 // VITAE — Application Constants
 // ============================================
 
+import type { SectionType } from "@/lib/types";
+
 export const APP_NAME = "Vitae";
 export const APP_DESCRIPTION = "Harvard-style resumes powered by AI. 100% free.";
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -103,4 +105,55 @@ export const TEMPLATES: { id: string; name: string; description: string; categor
     category: "Executive",
     previewUrl: "https://s3.resume.io/uploads/local_template_image/image/406/persistent-resource/vienna-resume-templates.jpg?v=1656070334",
   },
+];
+
+export const ALL_SECTION_TYPES: SectionType[] = [
+  "summary",
+  "experience",
+  "education",
+  "skills",
+  "projects",
+  "leadership",
+  "awards",
+  "certifications",
+  "languages",
+  "hobbies",
+  "custom",
+];
+
+export const TEMPLATE_SECTION_CAPABILITIES: Record<string, SectionType[]> = {
+  "harvard-classic": [
+    "summary",
+    "experience",
+    "education",
+    "skills",
+    "languages",
+    "awards",
+    "certifications",
+    "custom",
+  ],
+  "consulting-elite": ["summary", "experience", "education", "skills", "projects"],
+  "investment-banking": ["summary", "experience", "education", "skills"],
+  "modern-executive": ["summary", "experience", "education", "skills", "projects"],
+  "tech-professional": ["summary", "experience", "education", "skills", "projects"],
+  "london-luxury": [
+    "summary",
+    "experience",
+    "education",
+    "skills",
+    "languages",
+    "hobbies",
+  ],
+};
+
+export const OPEN_ROUTER_FREE_MODEL_PREFIXES = [
+  "deepseek/",
+  "nvidia/nemotron",
+  "google/gemma",
+  "minimax/",
+  "openai/gpt-oss",
+  "qwen/",
+  "meta-llama/",
+  "nousresearch/",
+  "arcee-ai/",
 ];

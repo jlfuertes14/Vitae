@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Send, X, Bot, User, Loader2, Minus, Maximize2 } from "lucide-react";
+import { Sparkles, Send, X, Bot, User, Loader2, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useResumeStore } from "@/lib/store/resume-store";
+import { ALL_SECTION_TYPES, TEMPLATE_SECTION_CAPABILITIES } from "@/lib/constants";
 
 interface Message {
   id: string;
@@ -29,7 +30,8 @@ export function ChatAssistant() {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { content, setHeader, updateSectionItem } = useResumeStore();
+  const { content, addSection, addSectionItem, updateSectionItem, templateId } = useResumeStore();
+  const allowedSections = TEMPLATE_SECTION_CAPABILITIES[templateId] || ALL_SECTION_TYPES;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -47,25 +49,278 @@ export function ChatAssistant() {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
     setInput("");
     setIsLoading(true);
 
     try {
-      // Mock AI response for now to show UI working
-      // We will wire this to a real API in the next step
-      setTimeout(() => {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "I've analyzed your request. I can definitely help with that. Since I'm currently in 'UI mode', I'll wait for the real API to be connected, but you can see how our conversation will flow!",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-        setIsLoading(false);
-      }, 1000);
+      const response = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: nextMessages.map((message) => ({
+            role: message.role,
+            content: message.content,
+          })),
+          resumeContent: content,
+          templateId,
+          allowedSections,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const fallbackMessage = response.status === 401
+          ? "Please sign in to use the AI assistant. If you are testing, set NEXT_PUBLIC_MOCK_AUTH=true and restart the dev server."
+          : "Sorry, I couldn't reach the AI service. Please try again in a moment.";
+        throw new Error(data?.error || fallbackMessage);
+      }
+
+      const replyText = typeof data?.reply === "string"
+        ? data.reply
+        : (typeof data?.result === "string" ? data.result : "I can help with that. What should we improve first?");
+
+      const patches = Array.isArray(data?.resumePatches)
+        ? data.resumePatches
+        : data?.resumePatch
+        ? [data.resumePatch]
+        : [];
+
+      const sectionTitles: Record<string, string> = {
+        summary: "Professional Summary",
+        experience: "Professional Experience",
+        education: "Education",
+        skills: "Skills & Expertise",
+        projects: "Projects",
+        leadership: "Leadership & Activities",
+        awards: "Awards",
+        certifications: "Certifications",
+        languages: "Languages",
+        hobbies: "Hobbies",
+        custom: "Custom Section",
+      };
+
+      const normalizeString = (value: unknown) =>
+        typeof value === "string" ? value.trim() : "";
+
+      const normalizeBullets = (value: unknown) =>
+        (Array.isArray(value) ? value : [])
+          .map((entry) => String(entry || "").trim())
+          .filter(Boolean);
+
+      const normalizeSkills = (value: unknown) => {
+        const rawSkills = Array.isArray(value) ? value : [];
+        const normalized = rawSkills
+          .map((entry) => {
+            if (typeof entry === "string") {
+              return { name: entry.trim(), level: "Very good" };
+            }
+            if (entry && typeof entry === "object") {
+              const name = normalizeString((entry as { name?: string }).name);
+              const level = normalizeString((entry as { level?: string }).level) || "Very good";
+              return name ? { name, level } : null;
+            }
+            return null;
+          })
+          .filter(Boolean) as { name: string; level: string }[];
+
+        return normalized;
+      };
+
+      const ensureSectionWithItem = (
+        type: string,
+        item: { id: string; content: Record<string, unknown> }
+      ) => {
+        const existing = content.sections.find((section) => section.type === type);
+        if (!existing) {
+          addSection({
+            id: type,
+            type: type as any,
+            title: sectionTitles[type] || "Section",
+            visible: true,
+            items: [item],
+          });
+          return;
+        }
+        addSectionItem(existing.id, item);
+      };
+
+      const applyPatch = (patch: { type?: string; item?: any }) => {
+        if (!patch?.type || !patch?.item) return null;
+        if (!allowedSections.includes(patch.type)) return null;
+        const type = patch.type;
+        const rawItem = patch.item;
+
+        if (type === "summary") {
+          const text = normalizeString(rawItem.text || rawItem.summary || rawItem.content);
+          if (!text) return null;
+          const summarySection = content.sections.find((section) => section.type === "summary");
+          if (summarySection?.items?.[0]) {
+            updateSectionItem(summarySection.id, summarySection.items[0].id, { text });
+          } else {
+            ensureSectionWithItem("summary", {
+              id: `item-${Date.now()}`,
+              content: { text },
+            });
+          }
+          return "Summary";
+        }
+
+        if (type === "experience") {
+          const bullets = normalizeBullets(rawItem.bullets);
+          const description = normalizeString(rawItem.description);
+          const normalizedItem = {
+            company: normalizeString(rawItem.company),
+            position: normalizeString(rawItem.position || rawItem.jobTitle),
+            location: normalizeString(rawItem.location),
+            startDate: normalizeString(rawItem.startDate),
+            endDate: normalizeString(rawItem.endDate),
+            bullets: bullets.length > 0 ? bullets : description ? [description] : [],
+          };
+
+          if (
+            normalizedItem.company ||
+            normalizedItem.position ||
+            normalizedItem.bullets.length > 0
+          ) {
+            ensureSectionWithItem("experience", {
+              id: `item-${Date.now()}`,
+              content: normalizedItem,
+            });
+            return "Experience";
+          }
+          return null;
+        }
+
+        if (type === "education") {
+          const bullets = normalizeBullets(rawItem.bullets);
+          const normalizedItem = {
+            institution: normalizeString(rawItem.institution),
+            degree: normalizeString(rawItem.degree),
+            field: normalizeString(rawItem.field),
+            location: normalizeString(rawItem.location),
+            startDate: normalizeString(rawItem.startDate),
+            endDate: normalizeString(rawItem.endDate),
+            bullets,
+          };
+          if (
+            normalizedItem.institution ||
+            normalizedItem.degree ||
+            normalizedItem.field
+          ) {
+            ensureSectionWithItem("education", {
+              id: `item-${Date.now()}`,
+              content: normalizedItem,
+            });
+            return "Education";
+          }
+          return null;
+        }
+
+        if (type === "projects" || type === "leadership") {
+          const bullets = normalizeBullets(rawItem.bullets);
+          const normalizedItem = {
+            name: normalizeString(rawItem.name || rawItem.title),
+            url: normalizeString(rawItem.url || rawItem.link),
+            description: normalizeString(rawItem.description),
+            location: normalizeString(rawItem.location),
+            startDate: normalizeString(rawItem.startDate),
+            endDate: normalizeString(rawItem.endDate),
+            bullets,
+          };
+          if (normalizedItem.name || bullets.length > 0) {
+            ensureSectionWithItem(type, {
+              id: `item-${Date.now()}`,
+              content: normalizedItem,
+            });
+            return type === "projects" ? "Projects" : "Leadership";
+          }
+          return null;
+        }
+
+        if (type === "skills" || type === "languages") {
+          const category = normalizeString(rawItem.category) ||
+            (type === "languages" ? "Languages" : "Technical Skills");
+          const normalizedSkills = normalizeSkills(rawItem.skills);
+          const fallbackName = normalizeString(rawItem.name);
+          if (normalizedSkills.length === 0 && fallbackName) {
+            normalizedSkills.push({
+              name: fallbackName,
+              level: normalizeString(rawItem.level) || "Very good",
+            });
+          }
+          if (normalizedSkills.length > 0) {
+            ensureSectionWithItem(type, {
+              id: `item-${Date.now()}`,
+              content: {
+                category,
+                skills: normalizedSkills,
+              },
+            });
+            return type === "skills" ? "Skills" : "Languages";
+          }
+          return null;
+        }
+
+        if (type === "hobbies") {
+          const text = normalizeString(rawItem.text || rawItem.hobbies);
+          if (!text) return null;
+          ensureSectionWithItem("hobbies", {
+            id: `item-${Date.now()}`,
+            content: { text },
+          });
+          return "Hobbies";
+        }
+
+        if (type === "awards" || type === "certifications" || type === "custom") {
+          const title = normalizeString(rawItem.title || rawItem.name);
+          const description = normalizeString(rawItem.description || rawItem.text);
+          if (!title && !description) return null;
+          ensureSectionWithItem(type, {
+            id: `item-${Date.now()}`,
+            content: {
+              title,
+              description,
+            },
+          });
+          return type === "awards"
+            ? "Awards"
+            : type === "certifications"
+            ? "Certifications"
+            : "Custom";
+        }
+
+        return null;
+      };
+
+      const appliedSections = patches
+        .map(applyPatch)
+        .filter(Boolean) as string[];
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: appliedSections.length > 0
+          ? `${replyText}\n\nUpdated sections: ${appliedSections.join(", ")}.`
+          : replyText,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Chat error:", error);
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content:
+          error instanceof Error
+            ? error.message
+            : "Sorry, something went wrong while sending your message.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } finally {
       setIsLoading(false);
     }
   };

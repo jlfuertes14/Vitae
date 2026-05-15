@@ -10,6 +10,7 @@ interface ResumeState {
   lastSavedAt: Date | null;
   
   // Actions
+  setContent: (content: ResumeContent) => void;
   setTemplate: (id: string) => void;
   setHeader: (header: Partial<ResumeHeader>) => void;
   updateSection: (sectionId: string, updates: Partial<ResumeSection>) => void;
@@ -74,6 +75,9 @@ export const useResumeStore = create<ResumeState>()((set) => ({
   isDirty: false,
   isSaving: false,
   lastSavedAt: null,
+
+  setContent: (content) =>
+    set({ content, isDirty: true, lastSavedAt: null }),
 
   setTemplate: (id) => set({ templateId: id, isDirty: true }),
 

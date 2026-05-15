@@ -26,23 +26,41 @@ export default function CoverLettersPage() {
   const [jobDescription, setJobDescription] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedLetter, setGeneratedLetter] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [format, setFormat] = useState<"document" | "email">("document");
   const [tone, setTone] = useState<"professional" | "enthusiastic" | "startup">("professional");
   
   const { content } = useResumeStore();
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
-    // Simulate AI generation
-    setTimeout(() => {
-      const name = content.header.name || "Alex Chen";
-      const letter = format === "document" 
-        ? `Dear Hiring Manager,\n\nI am writing to express my strong interest in the position described. With my background in ${content.sections.find(s => s.id === "skills")?.items[0]?.text || "full-stack development"}, I am confident that I can bring immediate value to your team.\n\nAt my previous role, I focused on building scalable systems and improving user experience. Your requirement for someone who can handle complex architectures perfectly aligns with my expertise...\n\nSincerely,\n${name}`
-        : `Subject: Application for Role - ${name}\n\nHi Team,\n\nI just saw the opening for the position and wanted to reach out. I've been following your work and I'm impressed by your recent growth. My experience with ${content.sections.find(s => s.id === "skills")?.items[0]?.text || "modern web tech"} makes me a great fit for this role.\n\nBest,\n${name}`;
-      
-      setGeneratedLetter(letter);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/ai/cover-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeContent: content,
+          jobDescription,
+          format,
+          tone,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to generate cover letter");
+      }
+
+      if (data.result) {
+        setGeneratedLetter(data.result);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate cover letter");
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -150,6 +168,12 @@ export default function CoverLettersPage() {
                  </div>
               </div>
            </div>
+
+           {error && (
+             <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+               {error}
+             </div>
+           )}
 
            <Button 
             onClick={handleGenerate}

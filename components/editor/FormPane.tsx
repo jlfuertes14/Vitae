@@ -3,7 +3,7 @@
 import { useResumeStore } from "@/lib/store/resume-store";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { DEFAULT_RESUME_SECTIONS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 export function FormPane() {
   const { content, setHeader, reorderSections, addSection } = useResumeStore();
@@ -209,11 +210,15 @@ export function FormPane() {
 
           <div className="pt-2">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full border-dashed border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 h-12 rounded-2xl gap-2 text-white/50 hover:text-white transition-all">
-                  <Plus className="size-4" />
-                  Add New Section
-                </Button>
+              <DropdownMenuTrigger
+                type="button"
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "w-full border-dashed border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 h-12 rounded-2xl gap-2 text-white/50 hover:text-white transition-all"
+                )}
+              >
+                <Plus className="size-4" />
+                Add New Section
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-[#0f0f0f] border-white/10 text-white">
                 {DEFAULT_RESUME_SECTIONS.filter(s => !content.sections.some(existing => existing.type === s.type)).map((section) => (

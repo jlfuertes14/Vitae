@@ -98,10 +98,18 @@ function ItemRenderer({ type, item }: { type: ResumeSection["type"]; item: Secti
 
     case "skills": {
       const skill = item as SkillsItem;
+      const rawSkills = Array.isArray(skill.content.skills)
+        ? skill.content.skills
+        : typeof skill.content.skills === "string"
+        ? [skill.content.skills]
+        : [];
+      const skillNames = rawSkills
+        .map((entry) => (typeof entry === "string" ? entry : entry?.name))
+        .filter(Boolean) as string[];
       return (
         <div className="text-[9.5pt] flex gap-2">
           <span className="font-bold">{skill.content.category}:</span>
-          <span>{Array.isArray(skill.content.skills) ? skill.content.skills.join(", ") : skill.content.skills}</span>
+          <span>{skillNames.join(", ")}</span>
         </div>
       );
     }
