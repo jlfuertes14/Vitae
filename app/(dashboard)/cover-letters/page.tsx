@@ -71,7 +71,7 @@ export default async function CoverLettersPage() {
         <h3 className="text-2xl font-semibold text-white tracking-tight">Your Saved Letters</h3>
         {coverLetters.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {coverLetters.map((letter) => (
+            {coverLetters.map((letter: any) => (
               <CoverLetterCard
                 key={letter.id}
                 coverLetter={{
