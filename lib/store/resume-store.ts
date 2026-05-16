@@ -1,8 +1,11 @@
 import { create } from "zustand";
+import { createInitialResumeContent } from "@/lib/resume-data";
 import { ResumeContent, ResumeHeader, ResumeSection, SectionItem } from "@/lib/types";
 
 interface ResumeState {
   // Data
+  activeResumeId: string | null;
+  title: string;
   content: ResumeContent;
   templateId: string;
   isDirty: boolean;
@@ -11,6 +14,7 @@ interface ResumeState {
   
   // Actions
   setContent: (content: ResumeContent) => void;
+  setTitle: (title: string) => void;
   setTemplate: (id: string) => void;
   setHeader: (header: Partial<ResumeHeader>) => void;
   updateSection: (sectionId: string, updates: Partial<ResumeSection>) => void;
@@ -21,56 +25,23 @@ interface ResumeState {
   reorderSections: (startIndex: number, endIndex: number) => void;
   addSection: (section: ResumeSection) => void;
   removeSection: (sectionId: string) => void;
+  initializeResume: (input: {
+    resumeId: string;
+    title: string;
+    templateId: string;
+    content: ResumeContent;
+    lastSavedAt?: Date | null;
+  }) => void;
   
   // Save State Management
   setSaving: (saving: boolean) => void;
   setLastSaved: (date: Date) => void;
 }
 
-const initialContent: ResumeContent = {
-  header: {
-    fullName: "",
-    email: "",
-    phone: "",
-    location: "",
-    linkedin: "",
-    website: "",
-    github: "",
-  },
-  sections: [
-    {
-      id: "summary",
-      type: "summary",
-      title: "Professional Summary",
-      visible: true,
-      items: [{ id: "summary-1", content: { text: "" } }],
-    },
-    {
-      id: "experience",
-      type: "experience",
-      title: "Professional Experience",
-      visible: true,
-      items: [],
-    },
-    {
-      id: "education",
-      type: "education",
-      title: "Education",
-      visible: true,
-      items: [],
-    },
-    {
-      id: "skills",
-      type: "skills",
-      title: "Skills & Expertise",
-      visible: true,
-      items: [],
-    },
-  ],
-};
-
 export const useResumeStore = create<ResumeState>()((set) => ({
-  content: initialContent,
+  activeResumeId: null,
+  title: "Untitled Resume",
+  content: createInitialResumeContent(),
   templateId: "harvard-classic",
   isDirty: false,
   isSaving: false,
@@ -78,6 +49,8 @@ export const useResumeStore = create<ResumeState>()((set) => ({
 
   setContent: (content) =>
     set({ content, isDirty: true, lastSavedAt: null }),
+
+  setTitle: (title) => set({ title, isDirty: true, lastSavedAt: null }),
 
   setTemplate: (id) => set({ templateId: id, isDirty: true }),
 
@@ -197,6 +170,18 @@ export const useResumeStore = create<ResumeState>()((set) => ({
       isDirty: true,
     })),
 
+  initializeResume: ({ resumeId, title, templateId, content, lastSavedAt }) =>
+    set({
+      activeResumeId: resumeId,
+      title,
+      templateId,
+      content,
+      isDirty: false,
+      isSaving: false,
+      lastSavedAt: lastSavedAt || null,
+    }),
+
   setSaving: (saving) => set({ isSaving: saving }),
-  setLastSaved: (date) => set({ lastSavedAt: date, isDirty: false }),
+  setLastSaved: (date) =>
+    set({ lastSavedAt: date, isDirty: false, isSaving: false }),
 }));

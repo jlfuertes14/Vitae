@@ -7,15 +7,23 @@ import { InvestmentBanking } from "@/components/templates/InvestmentBanking";
 import { ModernExecutive } from "@/components/templates/ModernExecutive";
 import { TechProfessional } from "@/components/templates/TechProfessional";
 import { LondonLuxury } from "@/components/templates/LondonLuxury";
+import { Sydney } from "@/components/templates/Sydney";
+import type { ResumeContent } from "@/lib/types";
 
 interface TemplateRendererProps {
   templateId?: string;
+  content?: ResumeContent;
   zoom?: number;
 }
 
-export function TemplateRenderer({ templateId: propTemplateId, zoom = 1 }: TemplateRendererProps) {
-  const { content, templateId: storeTemplateId } = useResumeStore();
+export function TemplateRenderer({
+  templateId: propTemplateId,
+  content: propContent,
+  zoom = 1,
+}: TemplateRendererProps) {
+  const { content: storeContent, templateId: storeTemplateId } = useResumeStore();
   const templateId = propTemplateId || storeTemplateId;
+  const content = propContent || storeContent;
 
   // Dynamic template selection based on templateId
   const renderTemplate = () => {
@@ -30,11 +38,15 @@ export function TemplateRenderer({ templateId: propTemplateId, zoom = 1 }: Templ
         return <TechProfessional content={content} />;
       case "london-luxury":
         return <LondonLuxury content={content} />;
+      case "sydney":
+        return <Sydney content={content} />;
       case "harvard-classic":
       default:
         return <HarvardClassic content={content} />;
     }
   };
+
+  const pagePadding = "15mm 12.7mm";
 
   return (
     <div 
@@ -42,7 +54,7 @@ export function TemplateRenderer({ templateId: propTemplateId, zoom = 1 }: Templ
       style={{
         width: "210mm",
         minHeight: "297mm",
-        padding: "15mm", // Balanced margins for high-density templates
+        padding: pagePadding,
         transform: `scale(${zoom})`,
       }}
     >

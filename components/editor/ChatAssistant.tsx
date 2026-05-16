@@ -32,6 +32,8 @@ export function ChatAssistant() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { content, addSection, addSectionItem, updateSectionItem, templateId } = useResumeStore();
   const allowedSections = TEMPLATE_SECTION_CAPABILITIES[templateId] || ALL_SECTION_TYPES;
+  const isAllowedSection = (value: string): value is (typeof allowedSections)[number] =>
+    allowedSections.includes(value as (typeof allowedSections)[number]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -149,7 +151,7 @@ export function ChatAssistant() {
 
       const applyPatch = (patch: { type?: string; item?: any }) => {
         if (!patch?.type || !patch?.item) return null;
-        if (!allowedSections.includes(patch.type)) return null;
+        if (!isAllowedSection(patch.type)) return null;
         const type = patch.type;
         const rawItem = patch.item;
 

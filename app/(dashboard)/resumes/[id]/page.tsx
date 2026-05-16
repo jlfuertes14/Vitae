@@ -1,4 +1,9 @@
+import { notFound } from "next/navigation";
+
 import { EditorLayout } from "@/components/editor/EditorLayout";
+import { ensureAppUser } from "@/lib/app-user";
+import { prisma } from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function ResumeEditorPage({
   params,
@@ -6,10 +11,42 @@ export default async function ResumeEditorPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // In a real implementation, fetch the resume data from Prisma here
-  // and pass it down or initialize the Zustand store.
-  // For now, we'll just render the EditorLayout.
+  if (!user) {
+    notFound();
+  }
 
-  return <EditorLayout resumeId={id} />;
+  const appUser = await ensureAppUser(user);
+  const resume = await prisma.resume.findFirst({
+    where: {
+      id,
+      userId: appUser.id,
+    },
+    select: {
+      title: true,
+      templateId: true,
+      content: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!resume) {
+    notFound();
+  }
+
+  return (
+    <EditorLayout
+      resumeId={id}
+      initialResume={{
+        title: resume.title,
+        templateId: resume.templateId,
+        content: resume.content as any,
+        lastSavedAt: resume.updatedAt.toISOString(),
+      }}
+    />
+  );
 }

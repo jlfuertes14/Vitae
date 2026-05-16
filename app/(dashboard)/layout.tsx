@@ -1,18 +1,33 @@
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Topbar } from "@/components/dashboard/Topbar";
 import { ChatAssistant } from "@/components/editor/ChatAssistant";
+import { getUserAvatarUrl } from "@/lib/avatar";
+import { createClient } from "@/lib/supabase/server";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // TODO: Fetch user from Supabase session
-  const mockUser = {
-    name: "User",
-    email: "user@vitae.app",
-    avatarUrl: null,
-  };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const dashboardUser = user
+    ? {
+        name:
+          (user.user_metadata?.full_name as string | undefined) ||
+          user.email?.split("@")[0] ||
+          "User",
+        email: user.email || "user@vitae.app",
+        avatarUrl: getUserAvatarUrl(user.user_metadata),
+      }
+    : {
+        name: "User",
+        email: "user@vitae.app",
+        avatarUrl: null,
+      };
 
   return (
     <div className="flex h-screen overflow-hidden bg-black text-white dark">
@@ -24,7 +39,7 @@ export default function DashboardLayout({
 
       <Sidebar />
       <div className="relative flex flex-1 flex-col overflow-hidden">
-        <Topbar user={mockUser} />
+        <Topbar user={dashboardUser} />
         <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8">
           {children}
         </main>

@@ -26,7 +26,7 @@ const readexPro = Readex_Pro({
 
 export const metadata: Metadata = {
   title: {
-    default: "Vitae — Harvard-Style Resumes Powered by AI",
+    default: "Vitae — Build your resume now using AI",
     template: "%s | Vitae",
   },
   description:

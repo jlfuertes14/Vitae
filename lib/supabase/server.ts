@@ -27,33 +27,47 @@ export async function createClient() {
 
   // Mock Bypass Logic
   if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
-    // Always return mock user for testing
-    if (true) {
-      return {
-        ...client,
-        auth: {
-          ...client.auth,
-          getUser: async () => ({
-            data: {
-              user: {
-                id: "mock-user-id",
-                email: "test@example.com",
-                user_metadata: { full_name: "Test User" },
-              },
-            },
+    const originalAuth = client.auth;
+    const mockUser = {
+      id: "mock-user-id",
+      email: "test@example.com",
+      user_metadata: { full_name: "Test User" },
+    };
+
+    return {
+      ...client,
+      auth: {
+        ...originalAuth,
+        getUser: async () => {
+          const result = await originalAuth.getUser();
+
+          if (result.data.user) {
+            return result;
+          }
+
+          return {
+            data: { user: mockUser },
             error: null,
-          }),
-          getSession: async () => ({
-            data: { session: { user: { id: "mock-user-id" } } },
-            error: null,
-          }),
-          signOut: async () => {
-            // Logic to clear mock cookie would go here, but for simplicity:
-            return { error: null };
-          },
+          };
         },
-      } as any;
-    }
+        getSession: async () => {
+          const result = await originalAuth.getSession();
+
+          if (result.data.session) {
+            return result;
+          }
+
+          return {
+            data: { session: { user: { id: mockUser.id } } },
+            error: null,
+          };
+        },
+        signOut: async () => {
+          const result = await originalAuth.signOut();
+          return result.error ? { error: null } : result;
+        },
+      },
+    } as typeof client;
   }
 
   return client;

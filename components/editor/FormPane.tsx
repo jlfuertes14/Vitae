@@ -33,6 +33,15 @@ import { cn } from "@/lib/utils";
 
 export function FormPane() {
   const { content, setHeader, reorderSections, addSection } = useResumeStore();
+  const handlePhotoUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setHeader({ photoUrl: reader.result });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -75,6 +84,41 @@ export function FormPane() {
                   className="pl-10"
                 />
                 <Camera className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-white/30" />
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <label
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "cursor-pointer border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                  )}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handlePhotoUpload(file);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                  Upload Photo
+                </label>
+                {content.header.photoUrl && (
+                  <button
+                    type="button"
+                    className={cn(
+                      buttonVariants({ variant: "ghost", size: "sm" }),
+                      "text-white/40 hover:text-white"
+                    )}
+                    onClick={() => setHeader({ photoUrl: "" })}
+                  >
+                    Remove
+                  </button>
+                )}
+                <span className="text-xs text-white/35">or paste a URL above</span>
               </div>
             </div>
             <div className="space-y-2">

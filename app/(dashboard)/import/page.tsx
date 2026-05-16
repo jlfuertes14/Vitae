@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { UploadCloud, FileText, CheckCircle2, Sparkles, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import { createResumeDraft } from "@/app/actions/resume";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -23,13 +24,16 @@ export default function ImportPage() {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<"idle" | "uploading" | "parsing" | "complete">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [createdResumeId, setCreatedResumeId] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("__current__");
   const { templateId, setTemplate, setContent } = useResumeStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
       setError(null);
+      setCreatedResumeId(null);
     }
   };
 
@@ -37,6 +41,7 @@ export default function ImportPage() {
     if (!file) return;
 
     setError(null);
+    setCreatedResumeId(null);
     setIsUploading(true);
     setStatus("uploading");
     setProgress(20);
@@ -57,10 +62,19 @@ export default function ImportPage() {
         body: formData,
       });
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get("content-type");
+      
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        throw new Error(`Server returned an invalid response (${response.status}). Please check server logs.`);
+      }
 
       if (!response.ok) {
-        throw new Error(data?.error || "Import failed");
+        throw new Error(data?.error || `Import failed with status ${response.status}`);
       }
 
       if (data?.resumeContent) {
@@ -68,6 +82,17 @@ export default function ImportPage() {
         if (selectedTemplateId !== "__current__") {
           setTemplate(templateToUse);
         }
+
+        const createdResume = await createResumeDraft({
+          templateId: templateToUse,
+          content: data.resumeContent,
+        });
+
+        if (!createdResume.success) {
+          throw new Error(createdResume.error || "Failed to create imported resume");
+        }
+
+        setCreatedResumeId(createdResume.resumeId);
       }
 
       setProgress(100);
@@ -118,7 +143,10 @@ export default function ImportPage() {
               <label className="text-[11px] uppercase tracking-[0.24em] text-white/40">
                 Target template
               </label>
-              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+              <Select
+                value={selectedTemplateId}
+                onValueChange={(value) => setSelectedTemplateId(value ?? "__current__")}
+              >
                 <SelectTrigger className="h-11 rounded-2xl border-white/10 bg-white/[0.04] text-white/80">
                   <SelectValue placeholder="Use current template" />
                 </SelectTrigger>
@@ -139,14 +167,16 @@ export default function ImportPage() {
             </div>
 
             <div 
+              onClick={() => fileInputRef.current?.click()}
               className={cn(
-                "group relative h-64 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center transition-all duration-300",
+                "group relative h-64 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center transition-all duration-300 cursor-pointer",
                 file ? "bg-white/[0.06] border-white/20" : "bg-transparent hover:bg-white/[0.02] hover:border-white/20"
               )}
             >
               <input
+                ref={fileInputRef}
                 type="file"
-                className="absolute inset-0 opacity-0 cursor-pointer"
+                className="hidden"
                 onChange={handleFileChange}
                 accept=".pdf,.docx,.txt"
               />
@@ -200,7 +230,7 @@ export default function ImportPage() {
                       {status === "complete" && "Conversion Complete!"}
                     </div>
                     <div className="text-xs text-white/30">
-                      {status === "parsing" && "Extracting experience and skills using Llama 4..."}
+                      {status === "parsing" && "Extracting experience and skills using Llama 3.1..."}
                     </div>
                   </div>
                   <div className="text-sm font-mono text-white/60">{progress}%</div>
@@ -220,7 +250,7 @@ export default function ImportPage() {
                     <div className="text-sm text-white/70">Your resume has been converted to Harvard standard.</div>
                   </div>
                 </div>
-                <Link href="/resumes/new-imported">
+                <Link href={createdResumeId ? `/resumes/${createdResumeId}` : "/resumes"}>
                   <Button className="bg-white text-black hover:bg-white/90 rounded-xl gap-2">
                     Open Workspace
                     <ArrowRight className="size-4" />

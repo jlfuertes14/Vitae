@@ -207,7 +207,7 @@ export function SectionItemEditor({ sectionId, type, item }: { sectionId: string
                 <Label className="text-[10px] font-bold uppercase tracking-widest text-white/30">Level</Label>
                 <Select 
                   value={(item.content.level as string) || "Tertiary"} 
-                  onValueChange={(value) => handleUpdate({ level: value })}
+                  onValueChange={(value) => handleUpdate({ level: value ?? "Tertiary" })}
                 >
                   <SelectTrigger className="w-full bg-black/20 border-white/5 rounded-xl h-10 px-3 text-sm text-white focus:ring-emerald-500/50">
                     <SelectValue placeholder="Select Level" />
@@ -369,7 +369,9 @@ export function SectionItemEditor({ sectionId, type, item }: { sectionId: string
                    />
                    <Select 
                     value={skill.level as string} 
-                    onValueChange={(val) => updateSkill(i, { level: val })}
+                    onValueChange={(val) =>
+                      updateSkill(i, { level: val ?? skill.level ?? "Very good" })
+                    }
                    >
                      <SelectTrigger className="w-32 bg-black/20 border-white/5 rounded-xl h-9 px-3 text-xs text-white/60">
                         <SelectValue />

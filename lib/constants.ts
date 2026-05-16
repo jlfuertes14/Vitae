@@ -10,10 +10,10 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000
 
 // AI Model Configuration (Groq)
 export const AI_MODELS = {
-  generation: "meta-llama/llama-4-maverick-17b-128e-instruct",
-  rewrite: "meta-llama/llama-4-scout-17b-16e-instruct",
-  scoring: "meta-llama/llama-4-maverick-17b-128e-instruct",
-  chat: "meta-llama/llama-4-scout-17b-16e-instruct",
+  generation: "llama-3.3-70b-versatile",
+  rewrite: "llama-3.3-70b-versatile",
+  scoring: "llama-3.3-70b-versatile",
+  chat: "llama-3.3-70b-versatile",
 } as const;
 
 // Rate Limiting
@@ -105,6 +105,13 @@ export const TEMPLATES: { id: string; name: string; description: string; categor
     category: "Executive",
     previewUrl: "https://s3.resume.io/uploads/local_template_image/image/406/persistent-resource/vienna-resume-templates.jpg?v=1656070334",
   },
+  {
+    id: "sydney",
+    name: "Sydney",
+    description: "Two-column layout with a navy sidebar and crisp section dividers.",
+    category: "Modern",
+    previewUrl: "https://s3.resume.io/uploads/local_template_image/image/441/persistent-resource/sydney-resume-templates.jpg?v=1651657428",
+  },
 ];
 
 export const ALL_SECTION_TYPES: SectionType[] = [
@@ -144,6 +151,7 @@ export const TEMPLATE_SECTION_CAPABILITIES: Record<string, SectionType[]> = {
     "languages",
     "hobbies",
   ],
+  "sydney": ["summary", "experience", "education", "skills", "custom"],
 };
 
 export const OPEN_ROUTER_FREE_MODEL_PREFIXES = [

@@ -3,22 +3,30 @@ import { useResumeStore } from "@/lib/store/resume-store";
 import { saveResumeContent } from "@/app/actions/resume";
 
 export function useAutoSave(resumeId: string) {
-  const { content, isDirty, setSaving, setLastSaved } = useResumeStore();
+  const { content, templateId, title, isDirty, setSaving, setLastSaved } =
+    useResumeStore();
   
   // Track the previous content stringified to avoid unnecessary saves
   // when object references change but content is identical
-  const prevContentRef = useRef(JSON.stringify(content));
+  const prevContentRef = useRef(
+    JSON.stringify({ content, templateId, title })
+  );
 
   useEffect(() => {
     if (!isDirty) return;
 
-    const currentContentStr = JSON.stringify(content);
+    const currentContentStr = JSON.stringify({ content, templateId, title });
     if (currentContentStr === prevContentRef.current) return;
 
     const timeoutId = setTimeout(async () => {
       setSaving(true);
       
-      const result = await saveResumeContent(resumeId, content);
+      const result = await saveResumeContent(
+        resumeId,
+        content,
+        templateId,
+        title
+      );
       
       if (result.success) {
         setLastSaved(new Date());
@@ -31,5 +39,5 @@ export function useAutoSave(resumeId: string) {
     }, 2000); // 2-second debounce
 
     return () => clearTimeout(timeoutId);
-  }, [content, isDirty, resumeId, setSaving, setLastSaved]);
+  }, [content, isDirty, resumeId, setSaving, setLastSaved, templateId, title]);
 }

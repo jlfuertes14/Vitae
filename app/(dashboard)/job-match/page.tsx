@@ -31,6 +31,7 @@ export default function JobMatchPage() {
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const { content } = useResumeStore();
 
   const mockLibrary = [
@@ -39,16 +40,44 @@ export default function JobMatchPage() {
     { id: "res-3", title: "Technical Architect", date: "1 month ago" },
   ];
 
+  const cleanAIList = (list: string[] | undefined) => {
+    if (!list) return [];
+    return list.flatMap(item => 
+      item.split(",")
+          .map(s => s.replace(/^[-•*]\s*/, "").replace(/Missing Skills/gi, "").trim())
+          .filter(Boolean)
+    );
+  };
+
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
+    setResult(null); // Clear previous result
     try {
-      // Simulate analysis logic
-      // In a real app, we would send the selected resume and job info to /api/ai/match
+      let resumeToAnalyze = content;
+
+      // If a custom file was uploaded, parse it first
+      if (resumeSource === "upload" && uploadedFile) {
+        const formData = new FormData();
+        formData.append("file", uploadedFile);
+        
+        const parseRes = await fetch("/api/import", {
+          method: "POST",
+          body: formData,
+        });
+        
+        const parseData = await parseRes.json();
+        if (parseData.resumeContent) {
+          resumeToAnalyze = parseData.resumeContent;
+        } else {
+          throw new Error("Failed to parse uploaded resume");
+        }
+      }
+
       const response = await fetch("/api/ai/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          resumeContent: content, 
+          resumeContent: resumeToAnalyze, 
           jobDescription: jobSource === "text" ? jobDescription : jobUrl 
         }),
       });
@@ -57,6 +86,7 @@ export default function JobMatchPage() {
       if (data.result) setResult(data.result);
     } catch (error) {
       console.error(error);
+      alert(error instanceof Error ? error.message : "Analysis failed");
     } finally {
       setIsAnalyzing(false);
     }
@@ -155,9 +185,49 @@ export default function JobMatchPage() {
           )}
 
           {resumeSource === "upload" && (
-            <div className="h-40 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group">
-               <UploadCloud className="size-8 text-white/20 mb-2 group-hover:scale-110 transition-transform" />
-               <div className="text-sm text-white/40">Upload your PDF/DOCX</div>
+            <div 
+              onClick={() => document.getElementById("resume-upload-input")?.click()}
+              className={cn(
+                "relative h-40 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center transition-all duration-300 cursor-pointer group",
+                uploadedFile ? "bg-white/[0.06] border-white/20" : "bg-white/[0.02] hover:bg-white/[0.04]"
+              )}
+            >
+               <input
+                 id="resume-upload-input"
+                 type="file"
+                 className="hidden"
+                 accept=".pdf,.docx,.txt"
+                 onChange={(e) => {
+                   const file = e.target.files?.[0];
+                   if (file) {
+                     setUploadedFile(file);
+                     console.log("File selected for matching:", file.name);
+                   }
+                 }}
+               />
+               {uploadedFile ? (
+                 <div className="flex flex-col items-center animate-in zoom-in-95 duration-300">
+                    <div className="size-12 rounded-xl bg-white flex items-center justify-center shadow-xl mb-3">
+                       <FileText className="size-6 text-black" />
+                    </div>
+                    <div className="text-sm font-bold text-white mb-1">{uploadedFile.name}</div>
+                    <div className="text-[10px] text-white/40 uppercase tracking-widest">Ready for analysis</div>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUploadedFile(null);
+                      }}
+                      className="mt-3 text-[10px] text-white/30 hover:text-white underline uppercase tracking-widest"
+                    >
+                      Change File
+                    </button>
+                 </div>
+               ) : (
+                 <>
+                   <UploadCloud className="size-8 text-white/20 mb-2 group-hover:scale-110 transition-transform" />
+                   <div className="text-sm text-white/40">Upload your PDF/DOCX</div>
+                 </>
+               )}
             </div>
           )}
         </div>
@@ -199,7 +269,7 @@ export default function JobMatchPage() {
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               placeholder="Paste the full job description here. Include requirements and responsibilities for best results."
-              className="min-h-[280px] resize-none rounded-[28px] border-white/10 bg-black/20 px-6 py-5 text-white placeholder:text-white/20 focus-visible:ring-emerald-500/20"
+              className="h-[280px] resize-none rounded-[28px] border-white/10 bg-black/20 px-6 py-5 text-white placeholder:text-white/20 focus-visible:ring-emerald-500/20 overflow-y-auto custom-scrollbar"
             />
           ) : (
             <div className="space-y-4">
@@ -261,38 +331,47 @@ export default function JobMatchPage() {
                              <CheckCircle2 className="size-5 text-emerald-500" />
                              Strengths Detected
                           </h4>
-                          <div className="flex flex-wrap gap-2">
-                             {["Cloud Architecture", "React Performance", "Team Leadership"].map((s) => (
-                               <Badge key={s} variant="outline" className="bg-white/5 border-white/10 text-white/60 py-1.5 px-3">{s}</Badge>
-                             ))}
+                           <div className="flex flex-wrap gap-2">
+                             {cleanAIList(result.strengths).length > 0 ? (
+                               cleanAIList(result.strengths).map((s: string) => (
+                                 <Badge key={s} variant="outline" className="bg-emerald-500/10 border-emerald-500/20 text-emerald-400 py-1.5 px-3 rounded-lg">{s}</Badge>
+                               ))
+                             ) : (
+                               ["Relevant Background", "Core Competencies"].map((s) => (
+                                 <Badge key={s} variant="outline" className="bg-white/5 border-white/10 text-white/40 py-1.5 px-3 rounded-lg italic">{s}</Badge>
+                               ))
+                             )}
                           </div>
                        </div>
-
+ 
                        <div className="space-y-4">
                           <h4 className="text-lg font-bold text-white flex items-center gap-2">
                              <AlertCircle className="size-5 text-amber-500" />
                              Critical Gaps
                           </h4>
-                          <div className="grid sm:grid-cols-2 gap-3">
-                             {result.missingSkills.map((skill: string, i: number) => (
-                               <div key={i} className="flex items-center gap-3 p-4 bg-white/[0.03] border border-white/10 rounded-2xl">
-                                  <div className="size-2 rounded-full bg-amber-500" />
-                                  <span className="text-sm text-white/80 font-medium">{skill}</span>
+                          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                             {cleanAIList(result.missingSkills).map((skill: string, i: number) => (
+                               <div key={i} className="flex items-center gap-2 px-3 py-2 bg-white/[0.03] border border-white/10 rounded-xl transition-colors hover:bg-white/[0.05]">
+                                  <div className="size-1.5 rounded-full bg-amber-500" />
+                                  <span className="text-xs text-white/70 font-medium truncate">{skill}</span>
                                </div>
                              ))}
+                             {cleanAIList(result.missingSkills).length === 0 && (
+                               <p className="text-xs text-white/30 italic px-1">No major gaps detected.</p>
+                             )}
                           </div>
                        </div>
-
+ 
                        <div className="space-y-4">
                           <h4 className="text-lg font-bold text-white flex items-center gap-2">
                              <Sparkles className="size-5 text-blue-400" />
                              Tailoring Suggestions
                           </h4>
-                          <div className="space-y-3">
-                             {result.suggestions.map((suggestion: string, i: number) => (
-                               <div key={i} className="group flex gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors">
-                                  <ArrowRight className="size-4 text-white/20 mt-1 group-hover:translate-x-1 transition-transform" />
-                                  <p className="text-sm text-white/50 leading-relaxed">{suggestion}</p>
+                          <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                             {cleanAIList(result.suggestions).map((suggestion: string, i: number) => (
+                               <div key={i} className="group flex gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors">
+                                  <ArrowRight className="size-3.5 text-white/20 mt-0.5 group-hover:translate-x-1 transition-transform" />
+                                  <p className="text-[13px] text-white/50 leading-relaxed">{suggestion}</p>
                                </div>
                              ))}
                           </div>

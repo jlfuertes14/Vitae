@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { Input } from "@/components/ui/input";
 import { FormPane } from "./FormPane";
 import { PreviewPane } from "./PreviewPane";
 import { Button } from "@/components/ui/button";
@@ -11,17 +12,71 @@ import { useAutoSave } from "@/hooks/use-auto-save";
 import { AIAssistant } from "./AIAssistant";
 import { TemplateSelector } from "./TemplateSelector";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { saveResumeContent } from "@/app/actions/resume";
+import type { ResumeContent } from "@/lib/types";
 
 interface EditorLayoutProps {
   resumeId: string;
+  initialResume: {
+    title: string;
+    templateId: string;
+    content: ResumeContent;
+    lastSavedAt: string | null;
+  };
 }
 
-export function EditorLayout({ resumeId }: EditorLayoutProps) {
-  const { isSaving, isDirty, lastSavedAt } = useResumeStore();
+export function EditorLayout({ resumeId, initialResume }: EditorLayoutProps) {
+  const [isManualSaving, startManualSave] = useTransition();
   const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
+  const {
+    activeResumeId,
+    title,
+    templateId,
+    content,
+    isSaving,
+    isDirty,
+    lastSavedAt,
+    initializeResume,
+    setTitle,
+    setSaving,
+    setLastSaved,
+  } = useResumeStore();
   
   // Initialize auto-save hook
   useAutoSave(resumeId);
+
+  useEffect(() => {
+    initializeResume({
+      resumeId,
+      title: initialResume.title,
+      templateId: initialResume.templateId,
+      content: initialResume.content,
+      lastSavedAt: initialResume.lastSavedAt
+        ? new Date(initialResume.lastSavedAt)
+        : null,
+    });
+  }, [initializeResume, initialResume, resumeId]);
+
+  const handleManualSave = () => {
+    startManualSave(async () => {
+      setSaving(true);
+      const result = await saveResumeContent(resumeId, content, templateId, title);
+      if (result.success) {
+        setLastSaved(new Date());
+      } else {
+        console.error(result.error);
+        setSaving(false);
+      }
+    });
+  };
+
+  if (activeResumeId !== resumeId) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background text-foreground">
+        <div className="text-sm text-muted-foreground">Loading resume...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground">
@@ -34,9 +89,14 @@ export function EditorLayout({ resumeId }: EditorLayoutProps) {
             </Button>
           </Link>
           <div className="hidden sm:flex flex-col">
-            <span className="font-semibold text-sm">Untitled Resume</span>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Untitled Resume"
+              className="h-auto border-0 bg-transparent px-0 py-0 text-sm font-semibold text-foreground focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent"
+            />
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-              {isSaving
+              {isSaving || isManualSaving
                 ? "Saving..."
                 : isDirty
                 ? "Unsaved changes"
@@ -85,7 +145,12 @@ export function EditorLayout({ resumeId }: EditorLayoutProps) {
               </a>
             }
           />
-          <Button size="sm" className="gap-2 h-8 px-2 sm:px-3" disabled={!isDirty || isSaving}>
+          <Button
+            size="sm"
+            className="gap-2 h-8 px-2 sm:px-3"
+            disabled={!isDirty || isSaving || isManualSaving}
+            onClick={handleManualSave}
+          >
             <Save className="size-3.5" />
             <span className="hidden sm:inline">Save</span>
           </Button>

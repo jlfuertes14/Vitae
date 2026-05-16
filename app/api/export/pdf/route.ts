@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createNotification } from "@/lib/notifications";
+import { prisma } from "@/lib/prisma";
 import puppeteer from "puppeteer";
 
 export async function GET(req: Request) {
@@ -19,11 +21,34 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Resume ID is required" }, { status: 400 });
     }
 
-    // Launch puppeteer
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    const resume = await prisma.resume.findFirst({
+      where: {
+        id: resumeId,
+        user: {
+          supabaseId: user.id,
+        },
+      },
+      select: { id: true },
     });
+
+    if (!resume) {
+      return NextResponse.json({ error: "Resume not found" }, { status: 404 });
+    }
+
+    // Launch puppeteer (Use Browserless.io in production if API key is present)
+    const browserlessKey = process.env.BROWSERLESS_API_KEY;
+    let browser;
+
+    if (browserlessKey) {
+      browser = await puppeteer.connect({
+        browserWSEndpoint: `wss://chrome.browserless.io?token=${browserlessKey}`,
+      });
+    } else {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+    }
 
     const page = await browser.newPage();
     
@@ -51,6 +76,21 @@ export async function GET(req: Request) {
     });
 
     await browser.close();
+
+    await prisma.export.create({
+      data: {
+        resumeId: resume.id,
+        format: "PDF",
+      },
+    });
+
+    await createNotification({
+      supabaseId: user.id,
+      type: "RESUME_EXPORT",
+      title: "Resume export ready",
+      body: `PDF export completed for resume ${resumeId}.`,
+      link: `/resumes/${resumeId}`,
+    });
 
     return new Response(Buffer.from(pdfBuffer), {
       headers: {

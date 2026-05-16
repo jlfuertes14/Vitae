@@ -1,7 +1,38 @@
-import Link from "next/link";
-import { ArrowRight, FileText, Plus } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 
-export default function ResumesPage() {
+import { CreateResumeButton } from "@/components/resumes/CreateResumeButton";
+import { ResumeLibraryCard } from "@/components/resumes/ResumeLibraryCard";
+import { ensureAppUser } from "@/lib/app-user";
+import { TEMPLATES } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
+
+const getTemplateName = (templateId: string) =>
+  TEMPLATES.find((template) => template.id === templateId)?.name || "Resume";
+
+export default async function ResumesPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const appUser = user ? await ensureAppUser(user) : null;
+
+  const resumes = appUser
+    ? await prisma.resume.findMany({
+        where: { userId: appUser.id },
+        orderBy: { updatedAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          templateId: true,
+          updatedAt: true,
+          createdAt: true,
+          content: true,
+        },
+      })
+    : [];
+
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <section className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8 backdrop-blur-xl md:p-10">
@@ -14,44 +45,59 @@ export default function ResumesPage() {
               Keep every version organized and ready to tailor.
             </h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-white/60">
-              This screen is ready for your real resume list. For now it acts as
-              a polished holding page so the dashboard navigation feels complete.
+              Open a saved draft, keep iterating in the editor, and pick up exactly
+              where you left off.
             </p>
           </div>
 
-          <Link
-            href="/resumes/demo"
-            className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-white/90"
-          >
+          <CreateResumeButton className="inline-flex h-auto items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-white/90">
             <Plus className="size-4" />
-            Open sample editor
-          </Link>
+            New resume
+          </CreateResumeButton>
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {["Executive Resume", "Product Resume", "Consulting Resume"].map(
-          (title, index) => (
-            <Link
-              key={title}
-              href={`/resumes/sample-${index + 1}`}
-              className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl transition hover:bg-white/[0.06]"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-3">
-                  <FileText className="size-5 text-white" />
-                </div>
-                <ArrowRight className="size-4 text-white/35" />
-              </div>
-              <h3 className="mt-6 text-xl font-medium text-white">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-white/50">
-                Placeholder entry wired to the editor route until real resume
-                data is connected.
-              </p>
-            </Link>
-          )
-        )}
-      </div>
+      {resumes.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {resumes.map((resume) => {
+            const header = (resume.content as any)?.header;
+            const fullName =
+              typeof header?.fullName === "string" ? header.fullName.trim() : "";
+
+            return (
+              <ResumeLibraryCard
+                key={resume.id}
+                resume={{
+                  id: resume.id,
+                  title: resume.title,
+                  templateName: getTemplateName(resume.templateId),
+                  fullName,
+                  updatedAt: resume.updatedAt.toLocaleDateString(),
+                }}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-[28px] border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
+            <FileText className="size-6 text-white/60" />
+          </div>
+          <h3 className="mt-5 text-2xl font-semibold text-white">
+            No saved resumes yet
+          </h3>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/50">
+            Create your first draft from a template, then it will appear here
+            automatically as you edit and save it.
+          </p>
+          <div className="mt-6 flex justify-center">
+            <CreateResumeButton className="inline-flex h-auto items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-white/90">
+              <Plus className="size-4" />
+              Create first resume
+            </CreateResumeButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

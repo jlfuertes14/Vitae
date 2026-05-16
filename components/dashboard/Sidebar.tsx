@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   ChevronLeft,
+  Bell,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
   { label: "Import", href: "/import", icon: UploadCloud },
   { label: "Cover Letters", href: "/cover-letters", icon: Mail },
   { label: "Job Match", href: "/job-match", icon: Target },
+  { label: "Notifications", href: "/notifications", icon: Bell },
 ];
 
 const NAV_BOTTOM = [{ label: "Settings", href: "/settings", icon: Settings }];

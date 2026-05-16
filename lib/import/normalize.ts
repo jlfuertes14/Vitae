@@ -57,6 +57,9 @@ const ensureAllowedSections = (
   return ALL_SECTION_TYPES;
 };
 
+const isResumeSection = (section: ResumeSection | null): section is ResumeSection =>
+  section !== null;
+
 const normalizeSection = (section: any, index: number): ResumeSection | null => {
   const type = normalizeString(section?.type) as SectionType;
   if (!type) return null;
@@ -209,10 +212,12 @@ export function normalizeResumeContent(
   };
 
   const rawSections = Array.isArray(raw?.sections) ? raw.sections : [];
-  const sections = rawSections
-    .map((section: any, index: number) => normalizeSection(section, index))
-    .filter(Boolean)
-    .filter((section) => allowed.includes(section!.type)) as ResumeSection[];
+  const normalizedSections: Array<ResumeSection | null> = rawSections.map(
+    (section: any, index: number) => normalizeSection(section, index)
+  );
+  const sections = normalizedSections
+    .filter(isResumeSection)
+    .filter((section: ResumeSection) => allowed.includes(section.type));
 
   return { header, sections };
 }

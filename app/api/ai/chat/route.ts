@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import { generateCompletion } from "@/lib/ai/groq";
+import { logAIUsage } from "@/lib/ai-usage";
 import { createClient } from "@/lib/supabase/server";
+import { aiRateLimit } from "@/lib/rate-limit";
 
 const MAX_MESSAGES = 8;
 const MAX_RESUME_CHARS = 8000;
+
+type ResumePatch = {
+  type?: string;
+  item?: Record<string, unknown>;
+};
 
 export async function POST(req: Request) {
   try {
@@ -16,7 +23,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { messages, resumeContent, templateId, allowedSections } = await req.json();
+    const { success } = await aiRateLimit.limit(user.id);
+    if (!success) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please try again later." },
+        { status: 429 }
+      );
+    }
+
+    const { messages, resumeContent, allowedSections } = await req.json();
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
@@ -27,11 +42,11 @@ export async function POST(req: Request) {
 
     const recentMessages = messages
       .slice(-MAX_MESSAGES)
-      .map((message) => ({
+      .map((message: any) => ({
         role: message?.role === "assistant" ? "assistant" : "user",
         content: String(message?.content || "").trim(),
       }))
-      .filter((message) => message.content.length > 0);
+      .filter((message: any) => message.content.length > 0);
 
     if (recentMessages.length === 0) {
       return NextResponse.json(
@@ -41,7 +56,7 @@ export async function POST(req: Request) {
     }
 
     const conversation = recentMessages
-      .map((message) =>
+      .map((message: any) =>
         message.role === "assistant"
           ? `Assistant: ${message.content}`
           : `User: ${message.content}`
@@ -117,17 +132,27 @@ ${
       jsonMode: true,
     });
 
+    await logAIUsage({
+      action: "CHAT_ASSIST",
+      user,
+      texts: [systemPrompt, userPrompt, result],
+    });
+
     try {
       const parsed = JSON.parse(result);
       if (typeof parsed?.reply === "string") {
-        const resumePatches = Array.isArray(parsed?.resumePatches)
+        const resumePatches: ResumePatch[] = Array.isArray(parsed?.resumePatches)
           ? parsed.resumePatches
           : parsed?.resumePatch
           ? [parsed.resumePatch]
           : [];
 
         const filteredPatches = allowedSectionList.length
-          ? resumePatches.filter((patch) => allowedSectionList.includes(patch?.type))
+          ? resumePatches.filter(
+              (patch) =>
+                typeof patch.type === "string" &&
+                allowedSectionList.includes(patch.type)
+            )
           : resumePatches;
 
         return NextResponse.json({

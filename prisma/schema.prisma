@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
@@ -107,6 +108,32 @@ model AIUsageLog {
   @@index([createdAt])
 }
 
+model Notification {
+  id         String            @id @default(cuid())
+  supabaseId String
+  title      String
+  body       String?
+  link       String?
+  type       NotificationType  @default(SYSTEM)
+  readAt     DateTime?
+  createdAt  DateTime          @default(now())
+
+  @@index([supabaseId])
+  @@index([createdAt])
+}
+
+model WorkspaceSettings {
+  id         String   @id @default(cuid())
+  supabaseId String   @unique
+  notifications Json
+  exports       Json
+  editor        Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([supabaseId])
+}
+
 enum ResumeTone {
   CORPORATE
   STARTUP
@@ -136,4 +163,11 @@ enum AIAction {
   GENERATE_COVER_LETTER
   JOB_MATCH
   CHAT_ASSIST
+}
+
+enum NotificationType {
+  SYSTEM
+  RESUME_IMPORT
+  RESUME_EXPORT
+  RESUME_UPDATE
 }

@@ -4,36 +4,13 @@ import {
   FileText,
   Plus,
   Sparkles,
-  Target,
   TrendingUp,
+  Mail,
 } from "lucide-react";
 
-const STATS = [
-  {
-    label: "Resumes created",
-    value: "03",
-    hint: "Polished drafts in progress",
-    icon: FileText,
-  },
-  {
-    label: "AI sessions",
-    value: "12",
-    hint: "Rewrites and bullet refinements",
-    icon: Sparkles,
-  },
-  {
-    label: "Average match",
-    value: "91%",
-    hint: "Across active role targets",
-    icon: Target,
-  },
-  {
-    label: "Export cadence",
-    value: "08",
-    hint: "PDF deliveries this month",
-    icon: TrendingUp,
-  },
-];
+import { ensureAppUser } from "@/lib/app-user";
+import { prisma } from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
 
 const ACTIONS = [
   {
@@ -56,7 +33,107 @@ const ACTIONS = [
   },
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  let stats = [
+    {
+      label: "Resumes created",
+      value: "00",
+      hint: "Create your first saved resume to begin tracking.",
+      icon: FileText,
+    },
+    {
+      label: "AI sessions",
+      value: "00",
+      hint: "Rewrite, score, and chat activity appears here.",
+      icon: Sparkles,
+    },
+    {
+      label: "Cover letters",
+      value: "00",
+      hint: "Generated letter drafts will accumulate here.",
+      icon: Mail,
+    },
+    {
+      label: "Export cadence",
+      value: "00",
+      hint: "PDF deliveries this month.",
+      icon: TrendingUp,
+    },
+  ];
+
+  if (user) {
+    const appUser = await ensureAppUser(user);
+
+    const [resumeCount, aiSessionCount, coverLetterCount, exportCount] =
+      await Promise.all([
+        prisma.resume.count({
+          where: { userId: appUser.id },
+        }),
+        prisma.aIUsageLog.count({
+          where: { userId: appUser.id },
+        }),
+        prisma.coverLetter.count({
+          where: { userId: appUser.id },
+        }),
+        prisma.export.count({
+          where: {
+            createdAt: { gte: startOfMonth },
+            resume: {
+              userId: appUser.id,
+            },
+          },
+        }),
+      ]);
+
+    stats = [
+      {
+        label: "Resumes created",
+        value: String(resumeCount).padStart(2, "0"),
+        hint:
+          resumeCount > 0
+            ? "Saved resumes connected to your workspace."
+            : "Create your first saved resume to begin tracking.",
+        icon: FileText,
+      },
+      {
+        label: "AI sessions",
+        value: String(aiSessionCount).padStart(2, "0"),
+        hint:
+          aiSessionCount > 0
+            ? "Tracked across rewrite, score, chat, and letter generation."
+            : "Your next AI action will show up here.",
+        icon: Sparkles,
+      },
+      {
+        label: "Cover letters",
+        value: String(coverLetterCount).padStart(2, "0"),
+        hint:
+          coverLetterCount > 0
+            ? "Drafts generated and saved from the studio."
+            : "Generate a cover letter to populate this metric.",
+        icon: Mail,
+      },
+      {
+        label: "Export cadence",
+        value: String(exportCount).padStart(2, "0"),
+        hint:
+          exportCount > 0
+            ? "PDF exports recorded this month."
+            : "No PDF exports recorded this month yet.",
+        icon: TrendingUp,
+      },
+    ];
+  }
+
   return (
     <div className="space-y-8">
       <section className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_120px_rgba(0,0,0,0.28)] backdrop-blur-xl md:p-10">
@@ -88,7 +165,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {STATS.map((stat) => (
+        {stats.map((stat) => (
           <div
             key={stat.label}
             className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.2)] backdrop-blur-xl"
