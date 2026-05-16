@@ -40,7 +40,7 @@ export async function GET() {
     ]);
 
     const items = [
-      ...resumes.map((r) => ({
+      ...resumes.map((r: any) => ({
         id: `resume-${r.id}`,
         label: r.title || "Untitled Resume",
         href: `/resumes/${r.id}`,
@@ -48,7 +48,7 @@ export async function GET() {
         description: `Last updated ${r.updatedAt.toLocaleDateString()}`,
         keywords: ["resume", "cv", r.title],
       })),
-      ...coverLetters.map((cl) => ({
+      ...coverLetters.map((cl: any) => ({
         id: `cover-letter-${cl.id}`,
         label: cl.title || "Untitled Cover Letter",
         href: `/cover-letters`, // or a specific ID if we have dynamic routing

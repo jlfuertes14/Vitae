@@ -59,7 +59,7 @@ export default async function ResumesPage() {
 
       {resumes.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {resumes.map((resume) => {
+          {resumes.map((resume: any) => {
             const header = (resume.content as any)?.header;
             const fullName =
               typeof header?.fullName === "string" ? header.fullName.trim() : "";
