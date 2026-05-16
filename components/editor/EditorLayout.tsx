@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { FormPane } from "./FormPane";
 import { PreviewPane } from "./PreviewPane";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Save, Download, Sparkles, Layout, Eye } from "lucide-react";
+import { ArrowLeft, Save, Download, Layout, Eye } from "lucide-react";
 import Link from "next/link";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAutoSave } from "@/hooks/use-auto-save";
@@ -81,79 +81,87 @@ export function EditorLayout({ resumeId, initialResume }: EditorLayoutProps) {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground">
       {/* Editor Topbar */}
-      <header className="flex items-center justify-between h-14 px-4 border-b border-border bg-card shrink-0">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="icon" className="size-8">
-              <ArrowLeft className="size-4" />
-            </Button>
-          </Link>
-          <div className="hidden sm:flex flex-col">
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Untitled Resume"
-              className="h-auto border-0 bg-transparent px-0 py-0 text-sm font-semibold text-foreground focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent"
-            />
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-              {isSaving || isManualSaving
-                ? "Saving..."
-                : isDirty
-                ? "Unsaved changes"
-                : lastSavedAt
-                ? `Saved at ${lastSavedAt.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}`
-                : "All changes saved"}
-            </span>
+      <header className="shrink-0 border-b border-border bg-card/95 backdrop-blur">
+        <div className="flex flex-col gap-3 px-3 py-3 sm:px-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-3 sm:items-center">
+              <Link href="/dashboard">
+                <Button variant="ghost" size="icon" className="size-8 shrink-0">
+                  <ArrowLeft className="size-4" />
+                </Button>
+              </Link>
+              <div className="min-w-0 flex-1">
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Untitled Resume"
+                  className="h-auto border-0 bg-transparent px-0 py-0 text-sm font-semibold text-foreground focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent"
+                />
+                <span className="mt-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {isSaving || isManualSaving
+                    ? "Saving..."
+                    : isDirty
+                    ? "Unsaved changes"
+                    : lastSavedAt
+                    ? `Saved at ${lastSavedAt.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}`
+                    : "All changes saved"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="hidden lg:block border-r border-border pr-2 mr-2">
+                <TemplateSelector />
+              </div>
+              <div className="hidden md:block">
+                <AIAssistant />
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 h-8 px-2 sm:px-3"
+                nativeButton={false}
+                render={
+                  <a href={`/api/export/pdf?id=${resumeId}`} target="_blank" rel="noopener noreferrer" download={`resume-${resumeId}.pdf`}>
+                    <Download className="size-3.5" />
+                    <span className="hidden sm:inline">Export PDF</span>
+                  </a>
+                }
+              />
+              <Button
+                size="sm"
+                className="gap-2 h-8 px-2 sm:px-3"
+                disabled={!isDirty || isSaving || isManualSaving}
+                onClick={handleManualSave}
+              >
+                <Save className="size-3.5" />
+                <span className="hidden sm:inline">Save</span>
+              </Button>
+            </div>
           </div>
-        </div>
 
-        {/* Mobile View Toggle */}
-        <div className="flex lg:hidden flex-1 justify-center px-4">
-          <Tabs value={mobileView} onValueChange={(v) => setMobileView(v as "edit" | "preview")}>
-            <TabsList className="h-8 p-0.5">
-              <TabsTrigger value="edit" className="h-7 px-3 text-[11px] gap-1.5">
-                <Layout className="size-3" />
-                Edit
-              </TabsTrigger>
-              <TabsTrigger value="preview" className="h-7 px-3 text-[11px] gap-1.5">
-                <Eye className="size-3" />
-                Preview
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+          <div className="flex items-center justify-center lg:hidden">
+            <Tabs value={mobileView} onValueChange={(v) => setMobileView(v as "edit" | "preview")}>
+              <TabsList className="h-9 p-1">
+                <TabsTrigger value="edit" className="h-7 gap-1.5 px-4 text-[11px]">
+                  <Layout className="size-3" />
+                  Edit
+                </TabsTrigger>
+                <TabsTrigger value="preview" className="h-7 gap-1.5 px-4 text-[11px]">
+                  <Eye className="size-3" />
+                  Preview
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <div className="hidden md:block border-r border-border pr-2 mr-2">
+          <div className="flex items-center justify-center gap-2 md:hidden">
             <TemplateSelector />
-          </div>
-          <div className="hidden sm:block">
             <AIAssistant />
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2 h-8 px-2 sm:px-3"
-            nativeButton={false}
-            render={
-              <a href={`/api/export/pdf?id=${resumeId}`} target="_blank" rel="noopener noreferrer" download={`resume-${resumeId}.pdf`}>
-                <Download className="size-3.5" />
-                <span className="hidden sm:inline">Export PDF</span>
-              </a>
-            }
-          />
-          <Button
-            size="sm"
-            className="gap-2 h-8 px-2 sm:px-3"
-            disabled={!isDirty || isSaving || isManualSaving}
-            onClick={handleManualSave}
-          >
-            <Save className="size-3.5" />
-            <span className="hidden sm:inline">Save</span>
-          </Button>
         </div>
       </header>
 

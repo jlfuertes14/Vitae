@@ -13,10 +13,10 @@ export function PreviewPane() {
   const handleZoomReset = () => setZoom(1);
 
   return (
-    <div className="flex-1 w-full h-full overflow-y-auto bg-muted/30 flex justify-center custom-scrollbar relative">
+    <div className="relative flex h-full w-full flex-1 justify-center overflow-y-auto bg-muted/30 custom-scrollbar">
       
       {/* Zoom Controls */}
-      <div className="sticky top-6 z-20 flex flex-col gap-1.5 p-1.5 rounded-lg bg-background/80 backdrop-blur-md border shadow-sm ml-4 mt-6 h-fit">
+      <div className="sticky top-3 z-20 ml-0 mt-3 flex h-fit flex-row gap-1.5 self-start rounded-xl border bg-background/80 p-1.5 shadow-sm backdrop-blur-md sm:top-6 sm:ml-4 sm:mt-6 sm:flex-col">
         <Button variant="ghost" size="icon" onClick={handleZoomIn} className="size-8 rounded-md" title="Zoom In">
           <ZoomIn className="size-4" />
         </Button>
@@ -28,7 +28,7 @@ export function PreviewPane() {
         </Button>
       </div>
 
-      <div className="flex-1 py-8 px-4 sm:px-8 overflow-x-auto custom-scrollbar flex justify-center items-start">
+      <div className="flex flex-1 items-start justify-center overflow-x-auto px-3 py-6 sm:px-8 sm:py-8 custom-scrollbar">
         <TemplateRenderer zoom={zoom} />
       </div>
     </div>

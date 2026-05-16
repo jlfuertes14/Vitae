@@ -209,6 +209,15 @@
     background-color: var(--color-muted-foreground);
   }
 
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .hero-title {
     font-family: var(--font-readex-pro), sans-serif;
     letter-spacing: -0.04em;

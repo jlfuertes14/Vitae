@@ -15,6 +15,11 @@ export default function LandingPage() {
     { text: "career", className: "text-white" },
     { text: "today.", className: "text-white/60" },
   ];
+  const heroStats = [
+    { value: "+12k", label: "resumes built" },
+    { value: "98%", label: "ats pass rate" },
+    { value: "+50", label: "elite templates" },
+  ];
 
   return (
     <div className="min-h-screen w-full bg-black font-['Readex_Pro',_system-ui,_-apple-system,_sans-serif] antialiased">
@@ -37,7 +42,7 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-black/30" />
         </div>
 
-        <nav className="absolute top-0 right-0 left-0 z-20 flex items-center justify-between gap-4 px-6 pt-10 md:px-12">
+        <nav className="absolute top-0 right-0 left-0 z-20 hidden items-center justify-between gap-4 px-6 pt-10 md:flex md:px-12">
           <div className="flex items-center gap-4 rounded-full border border-white/10 bg-neutral-900/40 py-3 pr-8 pl-6 shadow-2xl backdrop-blur-2xl transition-all hover:border-white/20">
             <div className="relative size-10">
               <svg
@@ -88,7 +93,103 @@ export default function LandingPage() {
           </Link>
         </nav>
 
-        <div className="relative z-10 h-full w-full pointer-events-none">
+        <nav className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 pt-5 md:hidden">
+          <div className="flex items-center gap-2.5 rounded-full border border-white/10 bg-neutral-900/40 py-2.5 pr-4 pl-3 shadow-2xl backdrop-blur-2xl">
+            <div className="relative size-6">
+              <svg
+                viewBox="0 0 32 32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="size-full"
+              >
+                <path
+                  d="M16 4L28 16L24 16L16 8L8 16L4 16L16 4Z"
+                  className="fill-white"
+                />
+                <path
+                  d="M16 14L24 22L20 22L16 18L12 22L8 22L16 14Z"
+                  className="fill-white/60"
+                />
+                <rect
+                  x="10"
+                  y="24"
+                  width="12"
+                  height="2.5"
+                  rx="1.25"
+                  className="fill-white/30"
+                />
+              </svg>
+            </div>
+            <span className="text-sm font-semibold tracking-tight text-white">
+              Vitae
+            </span>
+          </div>
+
+          <Link href="/signup">
+            <Button className="rounded-full border border-white/20 bg-neutral-900/60 px-5 py-4 text-sm font-medium text-white shadow-2xl backdrop-blur-xl transition-all hover:bg-white hover:text-black">
+              get started
+            </Button>
+          </Link>
+        </nav>
+
+        <div className="relative z-10 flex h-full flex-col px-4 pb-6 pt-24 md:hidden">
+          <div className="mt-10 space-y-3">
+            <h1 className="hero-title text-[21vw] font-medium text-white">
+              craft
+            </h1>
+            <h1 className="hero-title text-right text-[21vw] font-medium text-white">
+              your
+            </h1>
+            <h1 className="hero-title text-[21vw] font-medium text-white">
+              future
+            </h1>
+          </div>
+
+          <div className="mt-auto space-y-4 pointer-events-auto">
+            <div className="max-w-[320px] rounded-2xl border border-white/10 bg-black/24 p-3 backdrop-blur-sm">
+              <p className="text-sm font-light leading-6 text-white/85">
+                elite resumes powered by ai, designed for high-performance careers.
+                ats-optimized and free forever.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Link href="/signup" className="flex-1">
+                <Button className="h-12 w-full rounded-full bg-white text-sm font-medium text-black transition-all hover:bg-white/90">
+                  Start building
+                </Button>
+              </Link>
+              <Link href="/templates" className="flex-1">
+                <Button
+                  variant="outline"
+                  className="h-12 w-full rounded-full border-white/20 bg-black/24 text-sm text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
+                >
+                  Templates
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2 pointer-events-auto">
+            {heroStats.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-2xl border border-white/10 bg-black/24 p-3 backdrop-blur-sm"
+              >
+                <div className="text-2xl font-medium tracking-tight text-white">
+                  {stat.value}
+                </div>
+                <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-white/65">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-black" />
+        </div>
+
+        <div className="relative z-10 hidden h-full w-full pointer-events-none md:block">
           <h1 className="hero-title absolute top-[18%] left-4 text-[14vw] font-medium text-white md:top-[18%] md:left-10 md:text-[13vw]">
             craft
           </h1>

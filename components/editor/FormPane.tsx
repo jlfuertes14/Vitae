@@ -62,7 +62,7 @@ export function FormPane() {
 
   return (
     <ScrollArea className="flex-1 h-full">
-      <div className="p-6 space-y-8 pb-24">
+      <div className="space-y-6 p-4 pb-28 sm:space-y-8 sm:p-6 sm:pb-24">
         {/* Personal Details Section */}
         <section className="space-y-4">
           <div>
@@ -72,7 +72,7 @@ export function FormPane() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2 col-span-2">
               <Label htmlFor="photoUrl">Profile Photo URL</Label>
               <div className="relative">
@@ -183,7 +183,7 @@ export function FormPane() {
           
           <div className="space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-widest text-white/30">Personal Information (Optional)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="birthDate">Date of Birth</Label>
                 <Input

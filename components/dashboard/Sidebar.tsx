@@ -12,7 +12,6 @@ import {
   Mail,
   Palette,
   Settings,
-  Sparkles,
   Target,
   UploadCloud,
 } from "lucide-react";
@@ -26,7 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/actions/auth";
 
-const NAV_ITEMS = [
+export const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Resumes", href: "/resumes", icon: FileText },
   { label: "Templates", href: "/templates", icon: Palette },
@@ -36,7 +35,7 @@ const NAV_ITEMS = [
   { label: "Notifications", href: "/notifications", icon: Bell },
 ];
 
-const NAV_BOTTOM = [{ label: "Settings", href: "/settings", icon: Settings }];
+export const NAV_BOTTOM = [{ label: "Settings", href: "/settings", icon: Settings }];
 
 function VitaeMark({ size = "size-8" }: { size?: string }) {
   return (
@@ -209,5 +208,39 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+  );
+}
+
+export function MobileBottomNav() {
+  const pathname = usePathname();
+  const mobileItems = [...NAV_ITEMS, ...NAV_BOTTOM];
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/85 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 backdrop-blur-xl md:hidden">
+      <nav className="no-scrollbar flex items-stretch gap-1 overflow-x-auto px-1">
+        {mobileItems.map((item) => {
+          const isActive =
+            item.href === "/dashboard"
+              ? pathname === "/dashboard"
+              : pathname.startsWith(item.href);
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex min-w-[72px] flex-1 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-[11px] font-medium transition-all",
+                isActive
+                  ? "bg-white text-black shadow-[0_10px_30px_rgba(255,255,255,0.12)]"
+                  : "text-white/55 hover:bg-white/[0.06] hover:text-white"
+              )}
+            >
+              <item.icon className="size-[18px]" />
+              <span className="truncate">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
   );
 }

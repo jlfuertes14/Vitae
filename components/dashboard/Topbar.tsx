@@ -305,18 +305,18 @@ export function Topbar({ user }: TopbarProps) {
 
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-black/35 backdrop-blur-xl">
-      <div className="flex flex-col gap-5 px-4 py-5 md:px-6 lg:px-8">
+      <div className="flex flex-col gap-4 px-4 py-4 md:px-6 md:py-5 lg:px-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] uppercase tracking-[0.28em] text-white/35">
               {meta.eyebrow}
             </p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">
+            <h1 className="mt-2 text-xl font-semibold tracking-tight text-white sm:text-2xl md:text-3xl">
               {meta.title}
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <DropdownMenu onOpenChange={(open) => open && fetchNotifications()}>
               <DropdownMenuTrigger
                 type="button"
@@ -419,7 +419,7 @@ export function Topbar({ user }: TopbarProps) {
               <DropdownMenuTrigger
                 type="button"
                 aria-label="Account menu"
-                className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-2 py-2 pr-4 text-left"
+                className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-2 py-2 text-left sm:gap-3 sm:pr-4"
               >
                 <Avatar className="size-10 border border-white/10">
                   <AvatarImage
@@ -478,7 +478,7 @@ export function Topbar({ user }: TopbarProps) {
         </div>
 
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="relative md:w-[340px]">
+          <div className="relative w-full md:w-[340px]">
             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white/45 transition focus-within:border-white/20 focus-within:bg-white/[0.06]">
               <Search className="size-4 shrink-0 text-white/45" />
               <Input
@@ -563,7 +563,7 @@ export function Topbar({ user }: TopbarProps) {
             )}
           </div>
 
-          <div className="inline-flex items-center gap-2 self-start rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/65">
+          <div className="hidden items-center gap-2 self-start rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/65 sm:inline-flex">
             <Sparkles className="size-4" />
             <span>Consistent aesthetic layer synced with marketing and auth</span>
           </div>

@@ -1,4 +1,4 @@
-import { Sidebar } from "@/components/dashboard/Sidebar";
+import { MobileBottomNav, Sidebar } from "@/components/dashboard/Sidebar";
 import { Topbar } from "@/components/dashboard/Topbar";
 import { ChatAssistant } from "@/components/editor/ChatAssistant";
 import { getUserAvatarUrl } from "@/lib/avatar";
@@ -40,12 +40,13 @@ export default async function DashboardLayout({
       <Sidebar />
       <div className="relative flex flex-1 flex-col overflow-hidden">
         <Topbar user={dashboardUser} />
-        <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8">
+        <main className="flex-1 overflow-y-auto px-4 py-6 pb-28 md:px-6 md:pb-6 lg:px-8 lg:py-8">
           {children}
         </main>
       </div>
 
       <ChatAssistant />
+      <MobileBottomNav />
     </div>
   );
 }

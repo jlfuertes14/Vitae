@@ -328,7 +328,7 @@ export function ChatAssistant() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100]">
+    <div className="fixed bottom-24 right-4 z-[100] sm:bottom-6 sm:right-6">
       {/* Toggle Button */}
       {!isOpen && (
         <Button
@@ -342,7 +342,7 @@ export function ChatAssistant() {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="w-[380px] h-[520px] flex flex-col shadow-2xl border-white/10 bg-[#0a0a0a] backdrop-blur-2xl animate-in slide-in-from-bottom-10 fade-in duration-300">
+        <Card className="flex h-[min(520px,calc(100svh-8rem))] w-[calc(100vw-1.5rem)] max-w-[380px] flex-col border-white/10 bg-[#0a0a0a] shadow-2xl backdrop-blur-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 sm:h-[520px]">
           <CardHeader className="p-4 border-b border-white/10 flex flex-row items-center justify-between bg-white/[0.02]">
             <div className="flex items-center gap-2">
               <div className="size-8 rounded-lg bg-white flex items-center justify-center">
