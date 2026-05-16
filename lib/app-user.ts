@@ -25,16 +25,18 @@ const getUserEmail = (user: SupabaseUser) => {
 };
 
 export async function ensureAppUser(user: SupabaseUser) {
+  const email = getUserEmail(user);
+  
   return prisma.user.upsert({
-    where: { supabaseId: user.id },
+    where: { email: email },
     update: {
-      email: getUserEmail(user),
+      supabaseId: user.id, // Link to the latest provider's ID
       name: getUserName(user),
       avatarUrl: getUserAvatarUrl(user.user_metadata),
     },
     create: {
       supabaseId: user.id,
-      email: getUserEmail(user),
+      email: email,
       name: getUserName(user),
       avatarUrl: getUserAvatarUrl(user.user_metadata),
     },
